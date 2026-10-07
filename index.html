@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#1b6fa8" />
+  <title>마법의 소라고동</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="title">
+      <h1>마법의 소라고동</h1>
+      <p class="subtitle">질문을 하고, 줄을 당겼다 놓아 봐.</p>
+    </header>
+
+    <form class="ask" id="ask-form" autocomplete="off">
+      <label for="question" class="visually-hidden">질문</label>
+      <input id="question" name="question" type="text" maxlength="80"
+             placeholder="예) 오늘 해파리 잡으러 가도 될까?" enterkeyhint="done" />
+    </form>
+
+    <section class="stage" aria-label="소라고동">
+      <div class="bubble" id="bubble" aria-live="polite" hidden></div>
+
+      <svg id="conch" class="conch" viewBox="0 0 400 360" role="img"
+           aria-label="소라고동. 고리를 잡아당겼다 놓으면 대답해 줍니다.">
+        <defs>
+          <linearGradient id="shell" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#c9a6e8" />
+            <stop offset="1" stop-color="#8f63c4" />
+          </linearGradient>
+          <linearGradient id="spire" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#d9bff0" />
+            <stop offset="1" stop-color="#9c70cf" />
+          </linearGradient>
+          <radialGradient id="lip" cx="0.45" cy="0.5" r="0.6">
+            <stop offset="0" stop-color="#ffd3e4" />
+            <stop offset="1" stop-color="#f08bb4" />
+          </radialGradient>
+        </defs>
+
+        <g id="shell-group">
+          <!-- spire -->
+          <path d="M250 112 Q330 70 388 58 Q360 110 330 196 Z" fill="url(#spire)"
+                stroke="#5d3a8a" stroke-width="4" stroke-linejoin="round" />
+          <path d="M292 98 Q318 128 326 168" fill="none" stroke="#5d3a8a" stroke-width="3" />
+          <path d="M330 80 Q346 100 350 126" fill="none" stroke="#5d3a8a" stroke-width="3" />
+          <path d="M362 66 Q370 78 370 92" fill="none" stroke="#5d3a8a" stroke-width="3" />
+
+          <!-- body -->
+          <path d="M60 222 C52 150 140 96 236 98 C318 100 350 160 340 214
+                   C330 272 252 302 170 298 C108 294 66 266 60 222 Z"
+                fill="url(#shell)" stroke="#5d3a8a" stroke-width="4" />
+
+          <!-- knobs along the shoulder -->
+          <g fill="#d9bff0" stroke="#5d3a8a" stroke-width="3">
+            <path d="M118 128 q8 -26 26 -24 q-4 14 -6 30 Z" />
+            <path d="M170 104 q12 -26 30 -20 q-6 14 -8 28 Z" />
+            <path d="M228 98 q14 -24 32 -16 q-8 14 -10 26 Z" />
+          </g>
+
+          <!-- ridges -->
+          <g fill="none" stroke="#6f4a9f" stroke-width="3" stroke-linecap="round" opacity="0.7">
+            <path d="M150 150 C210 140 280 150 326 182" />
+            <path d="M160 196 C220 190 290 200 332 226" />
+            <path d="M178 244 C230 244 280 250 310 264" />
+          </g>
+
+          <!-- aperture -->
+          <path d="M66 220 C60 170 96 140 128 148 C160 156 166 214 150 252
+                   C138 280 104 288 86 272 C74 260 68 242 66 220 Z"
+                fill="url(#lip)" stroke="#5d3a8a" stroke-width="4" />
+          <path d="M92 214 C90 184 108 170 124 176 C140 184 140 222 128 246
+                   C118 264 100 262 96 248 Z" fill="#b2557f" opacity="0.55" />
+
+          <!-- string hole -->
+          <ellipse cx="236" cy="292" rx="11" ry="6" fill="#3d2560" />
+        </g>
+
+        <!-- pull string + ring -->
+        <path id="string" d="" fill="none" stroke="#f4ead2" stroke-width="4" stroke-linecap="round" />
+        <g id="ring" class="ring" tabindex="0" role="button"
+           aria-label="줄 고리. 잡아당겼다 놓아 주세요.">
+          <circle r="34" fill="transparent" />
+          <circle r="16" fill="none" stroke="#f2c84b" stroke-width="7" />
+          <circle r="16" fill="none" stroke="#b8862a" stroke-width="2" />
+        </g>
+      </svg>
+
+      <p class="hint" id="hint">고리를 잡고 멀리 당겼다가 놓아 봐</p>
+    </section>
+
+    <section class="history" aria-label="지난 대답">
+      <ol id="history-list"></ol>
+    </section>
+
+    <footer class="controls">
+      <button type="button" id="sound-toggle" aria-pressed="true">소리 켜짐</button>
+    </footer>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

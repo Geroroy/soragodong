@@ -1,0 +1,170 @@
+:root {
+  --sea-top: #3fa9e0;
+  --sea-bottom: #12507d;
+  --sand: #f3e2b3;
+  --ink: #1d2b3a;
+  --card: rgba(255, 255, 255, 0.92);
+  --accent: #f2c84b;
+  --muted: rgba(255, 255, 255, 0.85);
+}
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; height: 100%; }
+
+body {
+  font-family: "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 15% 20%, rgba(255,255,255,0.18) 0 6%, transparent 7%),
+    radial-gradient(circle at 80% 12%, rgba(255,255,255,0.14) 0 4%, transparent 5%),
+    radial-gradient(circle at 70% 60%, rgba(255,255,255,0.10) 0 8%, transparent 9%),
+    linear-gradient(var(--sea-top), var(--sea-bottom) 75%, #0d3b5e);
+  background-attachment: fixed;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.app {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: max(20px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 100%;
+}
+
+.title { text-align: center; color: #fff; }
+.title h1 {
+  margin: 0;
+  font-size: clamp(30px, 8vw, 44px);
+  letter-spacing: 0.02em;
+  text-shadow: 0 3px 0 #0d3b5e, 0 0 18px rgba(0,0,0,0.25);
+}
+.subtitle { margin: 6px 0 0; color: var(--muted); }
+
+.ask input {
+  width: 100%;
+  font: inherit;
+  font-size: 18px;
+  padding: 14px 18px;
+  border: 3px solid #0d3b5e;
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--ink);
+  outline: none;
+}
+.ask input:focus { border-color: var(--accent); }
+
+.stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 72px;
+}
+
+.conch {
+  width: 100%;
+  max-width: 420px;
+  overflow: visible;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#shell-group { transform-origin: 200px 200px; transform-box: view-box; }
+.conch.shaking #shell-group { animation: shake 0.12s linear infinite; }
+@keyframes shake {
+  0%   { transform: rotate(0deg) translate(0, 0); }
+  25%  { transform: rotate(-1.5deg) translate(-1px, 1px); }
+  50%  { transform: rotate(0deg) translate(1px, 0); }
+  75%  { transform: rotate(1.5deg) translate(0, -1px); }
+  100% { transform: rotate(0deg) translate(0, 0); }
+}
+
+.ring { cursor: grab; outline: none; }
+.ring:focus-visible circle:nth-child(2) { stroke: #fff; }
+.conch.dragging .ring { cursor: grabbing; }
+
+.bubble {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 92%;
+  padding: 14px 24px;
+  background: #fff;
+  border: 3px solid var(--ink);
+  border-radius: 22px;
+  font-size: clamp(22px, 6vw, 30px);
+  font-weight: 800;
+  text-align: center;
+  white-space: nowrap;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.2);
+  z-index: 2;
+}
+.bubble::after {
+  content: "";
+  position: absolute;
+  bottom: -14px;
+  left: 50%;
+  margin-left: -10px;
+  border: 12px solid transparent;
+  border-top-color: var(--ink);
+  border-bottom: 0;
+}
+.bubble.pop { animation: pop 0.35s cubic-bezier(.2, 1.6, .4, 1); }
+@keyframes pop {
+  from { transform: translateX(-50%) scale(0.3); opacity: 0; }
+  to   { transform: translateX(-50%) scale(1);   opacity: 1; }
+}
+.bubble.notice { font-size: 18px; font-weight: 600; border-style: dashed; }
+
+.hint { margin: 4px 0 0; color: var(--muted); font-size: 15px; text-align: center; }
+
+.history ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.history li {
+  background: rgba(255,255,255,0.16);
+  color: #fff;
+  border-radius: 14px;
+  padding: 10px 14px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 15px;
+}
+.history .q { opacity: 0.85; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.history .a { font-weight: 800; color: var(--accent); white-space: nowrap; }
+
+.controls { display: flex; justify-content: center; margin-top: auto; }
+.controls button {
+  font: inherit;
+  font-size: 14px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 2px solid rgba(255,255,255,0.6);
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+}
+.controls button[aria-pressed="false"] { opacity: 0.6; }
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .conch.shaking #shell-group, .bubble.pop { animation: none; }
+}
