@@ -209,6 +209,13 @@ body {
   50% { transform: translate(1px, 0); }
   75% { transform: rotate(1.5deg) translate(0, -1px); }
 }
+#mouth { transform-origin: 114px 218px; transform-box: view-box; }
+.conch.speaking #mouth { animation: talk 0.22s ease-in-out infinite alternate; }
+@keyframes talk {
+  from { transform: scale(1, 1); opacity: 0.6; }
+  to   { transform: scale(0.9, 1.25); opacity: 0.95; }
+}
+
 .ring { cursor: grab; outline: none; }
 .ring:focus-visible circle:last-child { stroke: var(--paper); }
 .conch.dragging .ring { cursor: grabbing; }
@@ -248,6 +255,7 @@ body {
   from { transform: translateX(-50%) scale(0.3); opacity: 0; }
   to   { transform: translateX(-50%) scale(1);   opacity: 1; }
 }
+.conch.speaking ~ .hint { visibility: hidden; }
 .bubble.notice { font-family: var(--font-body); font-size: 20px; border-style: dashed; }
 
 .hint { margin: 6px 0 0; color: var(--paper); font-size: 17px; text-align: center; text-shadow: 0 2px 0 var(--outline); }
@@ -296,5 +304,5 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .flower, .conch.shaking #shell-group, .bubble.pop, .mic[aria-pressed="true"] { animation: none; }
+  .flower, .conch.shaking #shell-group, .conch.speaking #mouth, .bubble.pop, .mic[aria-pressed="true"] { animation: none; }
 }

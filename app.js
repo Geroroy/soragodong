@@ -85,15 +85,52 @@
     src.start(t);
   }
 
+  // ---------- 목소리 ----------
+
+  const canSpeak = 'speechSynthesis' in window;
+  let koreanVoice = null;
+  let speechUnlocked = false;
+  let speakingTimer = 0;
+
+  function pickVoice() {
+    const voices = speechSynthesis.getVoices().filter(v => v.lang && v.lang.replace('_', '-').startsWith('ko'));
+    // 남성 목소리가 있으면 그쪽을 우선 (이름에 흔히 쓰이는 표기)
+    koreanVoice = voices.find(v => /male|남|InJoon|Minsu|Hyunsu|Bong/i.test(v.name) && !/female|여/i.test(v.name))
+      || voices.find(v => v.localService) || voices[0] || null;
+  }
+
+  // iOS 사파리 등은 사용자가 화면을 누른 순간에만 음성을 시작할 수 있어서,
+  // 고리를 잡는 순간 소리 없는 발화로 미리 음성을 열어 둔다.
+  function unlockSpeech() {
+    if (speechUnlocked || !soundOn || !canSpeak) return;
+    const u = new SpeechSynthesisUtterance(' ');
+    u.volume = 0;
+    speechSynthesis.speak(u);
+    speechUnlocked = true;
+  }
+
+  function setSpeaking(on) {
+    clearTimeout(speakingTimer);
+    svg.classList.toggle('speaking', on);
+  }
+
   function speak(text) {
-    if (!soundOn || !('speechSynthesis' in window)) return;
+    if (!soundOn || !canSpeak) return;
     speechSynthesis.cancel();
+    speechSynthesis.resume(); // 크롬에서 가끔 멈춘 채로 남는 문제 대비
     const u = new SpeechSynthesisUtterance(text);
     u.lang = 'ko-KR';
-    const voice = speechSynthesis.getVoices().find(v => v.lang && v.lang.startsWith('ko'));
-    if (voice) u.voice = voice;
-    u.pitch = 0.4;
-    u.rate = 0.8;
+    if (koreanVoice) u.voice = koreanVoice;
+    // 소라고동답게 낮고 느릿하게
+    u.pitch = 0.3;
+    u.rate = 0.72;
+    u.volume = 1;
+    u.onstart = () => {
+      setSpeaking(true);
+      // onend가 오지 않는 브라우저 대비
+      speakingTimer = setTimeout(() => setSpeaking(false), 4000);
+    };
+    u.onend = u.onerror = () => setSpeaking(false);
     speechSynthesis.speak(u);
   }
 
@@ -167,6 +204,7 @@
     if (state !== 'idle') return;
     e.preventDefault();
     ensureAudio();
+    unlockSpeech();
     if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
     ring.setPointerCapture(e.pointerId);
     const p = toSvgPoint(e);
@@ -174,6 +212,7 @@
     lastClickLen = pullLength();
     state = 'dragging';
     svg.classList.add('dragging');
+    setSpeaking(false);
     hideBubble();
   });
 
@@ -204,6 +243,7 @@
     if (state !== 'idle' || (e.key !== 'Enter' && e.key !== ' ')) return;
     e.preventDefault();
     ensureAudio();
+    unlockSpeech();
     autoPull();
   });
 
@@ -375,6 +415,10 @@
 
     recognition.onerror = (e) => {
       status.textContent = MIC_ERRORS[e.error] || '음성 인식이 멈췄어. 다시 해 봐';
+      // 마이크가 막힌 곳에서도 휴대폰 키보드의 음성 입력은 쓸 수 있다
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed' || e.error === 'audio-capture') {
+        status.textContent = '여기서는 마이크를 쓸 수 없어. 아래 입력칸을 누르고 키보드의 마이크 버튼으로 말해 봐';
+      }
       if (e.error === 'not-allowed' || e.error === 'service-not-allowed' || e.error === 'audio-capture') {
         showTyping(false);
       }
@@ -397,7 +441,8 @@
         recognition.stop();
         return;
       }
-      if ('speechSynthesis' in window) speechSynthesis.cancel();
+      if (canSpeak) speechSynthesis.cancel();
+      setSpeaking(false);
       hideBubble();
       status.textContent = '말해 봐. 다 말하면 알아서 멈춰';
       setQuestion('');
@@ -462,12 +507,18 @@
   soundToggle.addEventListener('click', () => {
     soundOn = !soundOn;
     try { localStorage.setItem('conch-sound', soundOn ? 'on' : 'off'); } catch (_) {}
-    if (!soundOn && 'speechSynthesis' in window) speechSynthesis.cancel();
+    if (!soundOn && canSpeak) {
+      speechSynthesis.cancel();
+      setSpeaking(false);
+    }
     updateSoundToggle();
   });
 
   // 일부 브라우저는 음성 목록을 늦게 불러옴
-  if ('speechSynthesis' in window) speechSynthesis.getVoices();
+  if (canSpeak) {
+    pickVoice();
+    speechSynthesis.addEventListener?.('voiceschanged', pickVoice);
+  }
 
   // 하늘 꽃 모양: 꽃잎 다섯 장
   (function drawFlower() {
