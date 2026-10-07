@@ -102,11 +102,18 @@
   const svg = document.getElementById('conch');
   const ring = document.getElementById('ring');
   const string = document.getElementById('string');
+  const stringCore = document.getElementById('string-core');
   const bubble = document.getElementById('bubble');
   const hint = document.getElementById('hint');
   const input = document.getElementById('question');
   const form = document.getElementById('ask-form');
   const historyList = document.getElementById('history-list');
+  const historySection = historyList.closest('.history');
+  const questionText = document.getElementById('question-text');
+  const micButton = document.getElementById('mic');
+  const micLabel = document.getElementById('mic-label');
+  const typeToggle = document.getElementById('type-toggle');
+  const status = document.getElementById('status');
   const soundToggle = document.getElementById('sound-toggle');
 
   const ANCHOR = { x: 236, y: 294 };
@@ -131,7 +138,9 @@
     const mx = (ANCHOR.x + ringPos.x) / 2;
     const my = (ANCHOR.y + ringPos.y) / 2 + 14 * slack;
     const endY = ringPos.y - 16; // 고리 윗부분에 연결
-    string.setAttribute('d', `M${ANCHOR.x} ${ANCHOR.y} Q${mx + 8 * slack} ${my} ${ringPos.x} ${endY}`);
+    const d = `M${ANCHOR.x} ${ANCHOR.y} Q${mx + 8 * slack} ${my} ${ringPos.x} ${endY}`;
+    string.setAttribute('d', d);
+    stringCore.setAttribute('d', d);
   }
 
   function toSvgPoint(evt) {
@@ -198,11 +207,6 @@
     autoPull();
   });
 
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    input.blur();
-    ring.focus({ preventScroll: true });
-  });
 
   function animate(duration, step) {
     return new Promise((resolve) => {
@@ -242,7 +246,7 @@
       return;
     }
 
-    const question = input.value.trim();
+    const question = currentQuestion;
     svg.classList.add('shaking');
     showThinking();
     await rewind(500 + len * 7, true);
@@ -250,6 +254,7 @@
 
     if (!question) {
       showNotice('먼저 질문을 해 줘');
+      micButton.focus({ preventScroll: true });
       state = 'idle';
       return;
     }
@@ -287,6 +292,122 @@
         y: from.y + dy * e + ny * wobble,
       };
       render();
+    });
+  }
+
+  // ---------- 질문 (음성 / 직접 입력) ----------
+
+  let currentQuestion = '';
+  const PLACEHOLDER = questionText.textContent;
+
+  function setQuestion(text, interim = false) {
+    const t = text.trim();
+    if (!interim) currentQuestion = t;
+    questionText.textContent = t || PLACEHOLDER;
+    questionText.dataset.empty = String(!t);
+    questionText.classList.toggle('interim', interim);
+  }
+
+  function showTyping(focus) {
+    form.hidden = false;
+    typeToggle.setAttribute('aria-expanded', 'true');
+    input.value = currentQuestion;
+    if (focus) input.focus();
+  }
+
+  typeToggle.addEventListener('click', () => {
+    if (form.hidden) {
+      showTyping(true);
+    } else {
+      form.hidden = true;
+      typeToggle.setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  input.addEventListener('input', () => setQuestion(input.value));
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    input.blur();
+    if (currentQuestion) status.textContent = '이제 고리를 당겨 봐';
+  });
+
+  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let recognition = null;
+  let listening = false;
+
+  const MIC_ERRORS = {
+    'not-allowed': '마이크를 쓸 수 없어. 브라우저에서 마이크를 허용하거나 직접 입력해 줘',
+    'service-not-allowed': '마이크를 쓸 수 없어. 브라우저에서 마이크를 허용하거나 직접 입력해 줘',
+    'audio-capture': '마이크를 찾지 못했어. 직접 입력해 줘',
+    'no-speech': '아무 말도 안 들렸어. 다시 눌러서 말해 봐',
+    'network': '음성 인식에 인터넷 연결이 필요해',
+  };
+
+  function setListening(on) {
+    listening = on;
+    micButton.setAttribute('aria-pressed', String(on));
+    micLabel.textContent = on ? '듣는 중…' : '말하기';
+  }
+
+  if (!Recognition) {
+    micButton.hidden = true;
+    typeToggle.hidden = true;
+    status.textContent = '이 브라우저는 음성 인식을 지원하지 않아. 질문을 입력해 줘';
+    showTyping(false);
+  } else {
+    recognition = new Recognition();
+    recognition.lang = 'ko-KR';
+    recognition.interimResults = true;
+    recognition.continuous = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onresult = (e) => {
+      let finalText = '';
+      let interimText = '';
+      for (const result of e.results) {
+        if (result.isFinal) finalText += result[0].transcript;
+        else interimText += result[0].transcript;
+      }
+      if (interimText) setQuestion(finalText + interimText, true);
+      else setQuestion(finalText);
+    };
+
+    recognition.onerror = (e) => {
+      status.textContent = MIC_ERRORS[e.error] || '음성 인식이 멈췄어. 다시 해 봐';
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed' || e.error === 'audio-capture') {
+        showTyping(false);
+      }
+    };
+
+    recognition.onend = () => {
+      setListening(false);
+      // 중간 결과만 남은 채로 끝났으면 그 내용을 질문으로 확정
+      if (questionText.classList.contains('interim')) setQuestion(questionText.textContent);
+      if (currentQuestion) {
+        input.value = currentQuestion;
+        status.textContent = '이제 고리를 당겨 봐';
+      } else {
+        setQuestion('');
+      }
+    };
+
+    micButton.addEventListener('click', () => {
+      if (listening) {
+        recognition.stop();
+        return;
+      }
+      if ('speechSynthesis' in window) speechSynthesis.cancel();
+      hideBubble();
+      status.textContent = '말해 봐. 다 말하면 알아서 멈춰';
+      setQuestion('');
+      questionText.textContent = '…';
+      try {
+        recognition.start();
+        setListening(true);
+      } catch (_) {
+        status.textContent = '음성 인식을 시작하지 못했어. 다시 눌러 봐';
+      }
     });
   }
 
@@ -329,6 +450,7 @@
     a.textContent = answer;
     li.append(q, a);
     historyList.prepend(li);
+    historySection.hidden = false;
     while (historyList.children.length > 5) historyList.lastChild.remove();
   }
 
@@ -346,6 +468,23 @@
 
   // 일부 브라우저는 음성 목록을 늦게 불러옴
   if ('speechSynthesis' in window) speechSynthesis.getVoices();
+
+  // 하늘 꽃 모양: 꽃잎 다섯 장
+  (function drawFlower() {
+    const petals = document.querySelector('#sky-flower .petals');
+    if (!petals) return;
+    const R = 20, r = 15, n = 5;
+    const pts = Array.from({ length: n }, (_, i) => {
+      const a = (i / n) * Math.PI * 2 - Math.PI / 2;
+      return [R * Math.cos(a), R * Math.sin(a)];
+    });
+    let d = `M${pts[0][0].toFixed(2)} ${pts[0][1].toFixed(2)}`;
+    for (let i = 1; i <= n; i++) {
+      const [x, y] = pts[i % n];
+      d += ` A${r} ${r} 0 1 1 ${x.toFixed(2)} ${y.toFixed(2)}`;
+    }
+    petals.setAttribute('d', d + ' Z');
+  })();
 
   updateSoundToggle();
   render();

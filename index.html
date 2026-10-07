@@ -3,22 +3,66 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#1b6fa8" />
+  <meta name="theme-color" content="#4cc3f0" />
   <title>마법의 소라고동</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Jua&display=swap" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <!-- 배경: 하늘 꽃 + 모래 바닥 -->
+  <div class="scenery" aria-hidden="true">
+    <svg width="0" height="0" class="defs">
+      <symbol id="sky-flower" viewBox="-40 -40 80 80">
+        <path class="petals" d="" fill="currentColor" />
+        <circle r="8" fill="#ffffff" opacity="0.45" />
+      </symbol>
+    </svg>
+    <svg class="flower" style="--x:6%;--y:9%;--s:96px;--r:12deg;color:#ff9fcf"><use href="#sky-flower" /></svg>
+    <svg class="flower" style="--x:78%;--y:4%;--s:120px;--r:-20deg;color:#b8f27c"><use href="#sky-flower" /></svg>
+    <svg class="flower" style="--x:86%;--y:38%;--s:70px;--r:30deg;color:#fff07a"><use href="#sky-flower" /></svg>
+    <svg class="flower" style="--x:-4%;--y:46%;--s:110px;--r:-8deg;color:#c7a6ff"><use href="#sky-flower" /></svg>
+    <svg class="flower" style="--x:40%;--y:20%;--s:54px;--r:44deg;color:#9fe8ff"><use href="#sky-flower" /></svg>
+    <svg class="flower" style="--x:70%;--y:68%;--s:90px;--r:-36deg;color:#ff9fcf"><use href="#sky-flower" /></svg>
+    <div class="sand"></div>
+  </div>
+
   <main class="app">
     <header class="title">
-      <h1>마법의 소라고동</h1>
-      <p class="subtitle">질문을 하고, 줄을 당겼다 놓아 봐.</p>
+      <h1 aria-label="마법의 소라고동">
+        <span>마</span><span>법</span><span>의</span>
+        <span class="gap"></span>
+        <span>소</span><span>라</span><span>고</span><span>동</span>
+      </h1>
+      <p class="tagline">무엇이든 물어봐!</p>
     </header>
 
-    <form class="ask" id="ask-form" autocomplete="off">
-      <label for="question" class="visually-hidden">질문</label>
-      <input id="question" name="question" type="text" maxlength="80"
-             placeholder="예) 오늘 해파리 잡으러 가도 될까?" enterkeyhint="done" />
-    </form>
+    <section class="ask" aria-label="질문하기">
+      <div class="question-card">
+        <span class="label">질문</span>
+        <p class="question-text" id="question-text" data-empty="true">마이크를 누르고 소라고동에게 물어봐</p>
+      </div>
+
+      <div class="ask-controls">
+        <button type="button" id="mic" class="mic" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="8" y="2" width="8" height="13" rx="4" />
+            <path d="M5 11a7 7 0 0 0 14 0M12 18v4M8 22h8" fill="none" />
+          </svg>
+          <span id="mic-label">말하기</span>
+        </button>
+        <button type="button" id="type-toggle" class="link-button" aria-expanded="false" aria-controls="ask-form">직접 입력</button>
+      </div>
+
+      <form class="type-form" id="ask-form" autocomplete="off" hidden>
+        <label for="question" class="visually-hidden">질문 입력</label>
+        <input id="question" name="question" type="text" maxlength="80"
+               placeholder="예) 오늘 해파리 잡으러 가도 될까?" enterkeyhint="done" />
+      </form>
+
+      <p class="status" id="status" aria-live="polite"></p>
+    </section>
 
     <section class="stage" aria-label="소라고동">
       <div class="bubble" id="bubble" aria-live="polite" hidden></div>
@@ -27,71 +71,75 @@
            aria-label="소라고동. 고리를 잡아당겼다 놓으면 대답해 줍니다.">
         <defs>
           <linearGradient id="shell" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#c9a6e8" />
-            <stop offset="1" stop-color="#8f63c4" />
+            <stop offset="0" stop-color="#e6c6f5" />
+            <stop offset="1" stop-color="#a77ad6" />
           </linearGradient>
           <linearGradient id="spire" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="#d9bff0" />
-            <stop offset="1" stop-color="#9c70cf" />
+            <stop offset="0" stop-color="#f1dcfb" />
+            <stop offset="1" stop-color="#b48ae0" />
           </linearGradient>
           <radialGradient id="lip" cx="0.45" cy="0.5" r="0.6">
-            <stop offset="0" stop-color="#ffd3e4" />
-            <stop offset="1" stop-color="#f08bb4" />
+            <stop offset="0" stop-color="#ffe0ec" />
+            <stop offset="1" stop-color="#ff94c0" />
           </radialGradient>
         </defs>
 
-        <g id="shell-group">
-          <!-- spire -->
-          <path d="M250 112 Q330 70 388 58 Q360 110 330 196 Z" fill="url(#spire)"
-                stroke="#5d3a8a" stroke-width="4" stroke-linejoin="round" />
-          <path d="M292 98 Q318 128 326 168" fill="none" stroke="#5d3a8a" stroke-width="3" />
-          <path d="M330 80 Q346 100 350 126" fill="none" stroke="#5d3a8a" stroke-width="3" />
-          <path d="M362 66 Q370 78 370 92" fill="none" stroke="#5d3a8a" stroke-width="3" />
+        <g id="shell-group" stroke="#1d1530" stroke-linejoin="round" stroke-linecap="round">
+          <!-- 뾰족한 나선 끝 -->
+          <path d="M250 112 Q330 70 388 58 Q360 110 330 196 Z" fill="url(#spire)" stroke-width="5" />
+          <g fill="none" stroke-width="4">
+            <path d="M292 98 Q318 128 326 168" />
+            <path d="M330 80 Q346 100 350 126" />
+            <path d="M362 66 Q370 78 370 92" />
+          </g>
 
-          <!-- body -->
+          <!-- 몸통 -->
           <path d="M60 222 C52 150 140 96 236 98 C318 100 350 160 340 214
                    C330 272 252 302 170 298 C108 294 66 266 60 222 Z"
-                fill="url(#shell)" stroke="#5d3a8a" stroke-width="4" />
+                fill="url(#shell)" stroke-width="5" />
+          <path d="M170 116 C210 108 260 112 296 132" fill="none" stroke="#ffffff" stroke-width="7" opacity="0.6" />
 
-          <!-- knobs along the shoulder -->
-          <g fill="#d9bff0" stroke="#5d3a8a" stroke-width="3">
+          <!-- 어깨의 돌기 -->
+          <g fill="#f1dcfb" stroke-width="4">
             <path d="M118 128 q8 -26 26 -24 q-4 14 -6 30 Z" />
             <path d="M170 104 q12 -26 30 -20 q-6 14 -8 28 Z" />
             <path d="M228 98 q14 -24 32 -16 q-8 14 -10 26 Z" />
           </g>
 
-          <!-- ridges -->
-          <g fill="none" stroke="#6f4a9f" stroke-width="3" stroke-linecap="round" opacity="0.7">
+          <!-- 주름 -->
+          <g fill="none" stroke="#6a3f99" stroke-width="3.5" opacity="0.75">
             <path d="M150 150 C210 140 280 150 326 182" />
             <path d="M160 196 C220 190 290 200 332 226" />
             <path d="M178 244 C230 244 280 250 310 264" />
           </g>
 
-          <!-- aperture -->
+          <!-- 입구 -->
           <path d="M66 220 C60 170 96 140 128 148 C160 156 166 214 150 252
                    C138 280 104 288 86 272 C74 260 68 242 66 220 Z"
-                fill="url(#lip)" stroke="#5d3a8a" stroke-width="4" />
+                fill="url(#lip)" stroke-width="5" />
           <path d="M92 214 C90 184 108 170 124 176 C140 184 140 222 128 246
-                   C118 264 100 262 96 248 Z" fill="#b2557f" opacity="0.55" />
+                   C118 264 100 262 96 248 Z" fill="#c2507f" opacity="0.6" stroke="none" />
 
-          <!-- string hole -->
-          <ellipse cx="236" cy="292" rx="11" ry="6" fill="#3d2560" />
+          <!-- 줄 구멍 -->
+          <ellipse cx="236" cy="292" rx="11" ry="6" fill="#1d1530" stroke="none" />
         </g>
 
-        <!-- pull string + ring -->
-        <path id="string" d="" fill="none" stroke="#f4ead2" stroke-width="4" stroke-linecap="round" />
+        <!-- 줄과 고리 -->
+        <path id="string" d="" fill="none" stroke="#1d1530" stroke-width="7" stroke-linecap="round" />
+        <path id="string-core" d="" fill="none" stroke="#fff6dc" stroke-width="3.5" stroke-linecap="round" />
         <g id="ring" class="ring" tabindex="0" role="button"
            aria-label="줄 고리. 잡아당겼다 놓아 주세요.">
           <circle r="34" fill="transparent" />
-          <circle r="16" fill="none" stroke="#f2c84b" stroke-width="7" />
-          <circle r="16" fill="none" stroke="#b8862a" stroke-width="2" />
+          <circle r="16" fill="none" stroke="#1d1530" stroke-width="12" />
+          <circle r="16" fill="none" stroke="#ffd93b" stroke-width="6" />
         </g>
       </svg>
 
       <p class="hint" id="hint">고리를 잡고 멀리 당겼다가 놓아 봐</p>
     </section>
 
-    <section class="history" aria-label="지난 대답">
+    <section class="history" aria-labelledby="history-title" hidden>
+      <h2 id="history-title">지난 대답</h2>
       <ol id="history-list"></ol>
     </section>
 
